@@ -1,174 +1,110 @@
-# EngageHUB
+# EngageHUB — Prototype
 
-Social media management platform built with React (Vite) and Node.js (Express). This repository is organized as a monorepo with separate frontend and backend packages.
+A social media management project bringing account connections, content scheduling, publishing, and analytics into a unified dashboard.
 
-## Project structure
+**React · Vite · Tailwind CSS · Node.js · Express · MongoDB · OAuth**
 
-```txt
-engagehub/
-├── frontend/          # React + Vite SPA (port 5173)
-├── backend/           # Express API (port 4000)
-├── package.json       # Root scripts (run both apps)
-├── README.md
-└── .gitignore
-```
+## Product focus
 
-### Frontend (`frontend/`)
+Managing multiple social accounts involves more than composing a post: connections, authorization, media, scheduling, and provider-specific behavior all need to work together. EngageHUB organizes these concerns into a React frontend and an Express backend.
 
-- `src/` — React components, pages, hooks, context, services
-- `src/config/api.js` — centralized API base URL (`VITE_API_URL`)
-- `vite.config.js`, `tailwind.config.js`, `postcss.config.js`
-- `index.html`, `vercel.json`
+This repository is the prototype codebase. The related [EngageHUB repository](https://github.com/psodage/EngageHUB) is maintained separately; check each repository rather than assuming their behavior is identical.
 
-### Backend (`backend/`)
+## Architecture
 
-- `index.js` — Express app and auth routes
-- `start.js` — env loading and server bootstrap
-- `routes/`, `controllers/`, `services/`, `models/`, `config/`, `utils/`, `jobs/`
-- `public/uploads/` — hosted media for social platforms
-- `scripts/` — OAuth and integration debug utilities
+`React SPA → Express API → MongoDB`
 
-## Prerequisites
+`Express API ↔ Social platform OAuth / publishing APIs`
 
-- Node.js 18+
-- MongoDB (Atlas or local)
-- OAuth credentials for the social platforms you connect (see `backend/.env.example`)
+| Path | Responsibility |
+| --- | --- |
+| `frontend/` | React pages, components, hooks, context, and API services |
+| `frontend/src/config/api.js` | Centralized frontend API configuration |
+| `backend/index.js` | Express application and authentication routes |
+| `backend/start.js` | Environment loading and server bootstrap |
+| `backend/routes/`, `controllers/` | API routing and request handlers |
+| `backend/services/` | Authentication, social integrations, and supporting services |
+| `backend/models/` | Database models |
+| `backend/jobs/` | Background job code |
+| `backend/public/uploads/` | Hosted media assets |
+| `backend/scripts/` | OAuth and integration debugging utilities |
+| `docs/` | Supporting documentation |
 
-## Installation
+## Local setup
+
+### Prerequisites
+
+- Node.js 18+ as documented by the project; use a version compatible with the installed frontend and backend dependencies.
+- npm and a MongoDB instance.
+- OAuth application credentials for each social platform you want to connect.
+
+### Install dependencies
+
+~~~sh
+git clone https://github.com/psodage/EngageHUB-Prototype.git
+cd EngageHUB-Prototype
+npm run install:all
+~~~
+
+### Configure the environment
+
+Create `backend/.env` from `backend/.env.example` and `frontend/.env` from `frontend/.env.example`.
+
+| Variable | Location | Purpose |
+| --- | --- | --- |
+| `MONGODB_URI` | Backend | MongoDB connection |
+| `JWT_SECRET` | Backend | Authentication signing secret |
+| `TOKEN_ENCRYPTION_KEY` | Backend | Token encryption configuration |
+| `APP_BASE_URL` | Backend | Public API origin used by integrations |
+| `CLIENT_BASE_URL` | Backend | Frontend origin for CORS |
+| `VITE_API_URL` | Frontend | API origin, such as `http://localhost:4000` |
+
+Configure the provider-specific values listed in the backend environment template. Register matching OAuth redirect URIs with each provider. For `VITE_API_URL`, use the API origin without appending `/api`.
+
+### Run the applications
 
 From the repository root:
 
-```bash
-npm run install:all
-```
-
-Or install each package separately:
-
-```bash
-npm install
-cd frontend && npm install
-cd ../backend && npm install
-```
-
-## Environment setup
-
-### Backend
-
-Copy the example file and fill in your secrets:
-
-```bash
-cp backend/.env.example backend/.env
-```
-
-Required variables include `MONGODB_URI`, `JWT_SECRET`, `TOKEN_ENCRYPTION_KEY`, `APP_BASE_URL`, and `CLIENT_BASE_URL`. OAuth redirect URIs must match your API host (local: `http://localhost:4000`, production: your Render/Railway URL).
-
-### Frontend
-
-Copy the example file:
-
-```bash
-cp frontend/.env.example frontend/.env
-```
-
-Default local API URL:
-
-```env
-VITE_API_URL=http://localhost:4000
-```
-
-Use the API origin only — do **not** append `/api`.
-
-For production builds (Vercel/Netlify), set `VITE_API_URL` to your deployed API, e.g. `https://engagehub.onrender.com`.
-
-## Running locally
-
-### Both frontend and backend
-
-From the repo root:
-
-```bash
+~~~sh
 npm run dev
-```
+~~~
 
-- Frontend: http://localhost:5173
-- Backend: http://localhost:4000
+Default local addresses:
 
-### Frontend only
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:4000`
+- API health check: `http://localhost:4000/api/health`
 
-```bash
-cd frontend
-npm run dev
-```
+## Available commands
 
-### Backend only
-
-```bash
-cd backend
-npm run dev
-```
-
-## Production scripts
-
-| Command | Location | Description |
-|---------|----------|-------------|
-| `npm run build` | root | Build frontend for static hosting |
-| `npm run build` | frontend | Vite production build → `frontend/dist` |
-| `npm start` | backend | Start Express API |
+| Command | Run from | Purpose |
+| --- | --- | --- |
+| `npm run install:all` | Root | Install root, frontend, and backend dependencies |
+| `npm run dev` | Root | Run frontend and backend development servers |
+| `npm run client` | Root | Run the frontend development server |
+| `npm run server:dev` | Root | Run the backend development server |
+| `npm run build` | Root | Build frontend assets |
+| `npm run vercel-build` | Root | Install frontend dependencies and build assets |
+| `npm start` | `backend/` | Start the API |
+| `npm run debug:meta-oauth` | `backend/` | Inspect the Meta OAuth integration |
+| `npm run debug:google-business-post` | `backend/` | Inspect the Google Business publishing integration |
 
 ## Deployment
 
-### Frontend (Vercel / Netlify / Render static site)
+Deploy the frontend and API as separate services.
 
-**Option A — repo root (monorepo)**
+**Frontend:** install dependencies, run `npm run build` from the root, and publish `frontend/dist`. Set `VITE_API_URL` to the deployed API origin. The repository includes SPA routing configuration.
 
-| Setting | Value |
-|---------|--------|
-| Build command | `npm install && npm run build` |
-| Publish directory | `frontend/dist` |
-| Env | `VITE_API_URL=https://your-api.example.com` |
+**Backend:** use `backend/` as the service root, install dependencies with `npm install`, and start with `npm start`. Supply the backend environment values through the hosting service.
 
-Root `npm run build` runs `npm install` inside `frontend/` so Vite is available on CI.
+Set `APP_BASE_URL` to the API origin and `CLIENT_BASE_URL` to the frontend origin. Update registered OAuth redirect URIs to match. The root build command produces the frontend; it does not deploy the API. Plan persistent or external media storage if your hosting environment does not preserve local uploads.
 
-**Option B — `frontend/` as service root**
+## Verification and integration scope
 
-| Setting | Value |
-|---------|--------|
-| Root directory | `frontend` |
-| Build command | `npm install && npm run build` |
-| Publish directory | `dist` |
+Start by checking the health route and frontend-to-API connectivity. Then test account authorization, content preparation, and the publishing or scheduling workflow for each configured provider with an account you control. Debug utilities may contact external provider APIs; inspect them before running.
 
-`vercel.json` is included for SPA routing.
+Provider support depends on OAuth permissions, provider approval, account type, and environment configuration. Verify each configured integration separately.
 
-### Backend (Render / Railway / VPS)
+## Usage rights
 
-1. Set the **root directory** to `backend/` (not the repo root).
-2. Build command: `npm install`
-3. Start command: `npm start`
-4. Set all variables from `backend/.env.example` in the host dashboard.
-5. Ensure `APP_BASE_URL` matches your API URL and OAuth redirect URIs are registered with each provider.
-6. Set `CLIENT_BASE_URL` to your frontend URL for CORS.
-
-Do **not** use `npm run build` at the repo root for a backend-only Render service — that builds the Vite frontend.
-
-### CORS
-
-The API allows requests from `CLIENT_BASE_URL` (default `http://localhost:5173`). Update this in production when the SPA is hosted on a different domain.
-
-## Debug utilities
-
-From `backend/`:
-
-```bash
-npm run debug:meta-oauth
-npm run debug:google-business-post
-```
-
-## Health check
-
-```bash
-curl http://localhost:4000/api/health
-```
-
-## License
-
-Private — all rights reserved.
+All rights reserved, consistent with the existing project documentation.
